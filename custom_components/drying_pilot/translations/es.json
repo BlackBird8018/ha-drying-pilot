@@ -1,0 +1,285 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurar DryingPilot",
+        "data": {
+          "weather_entity": "Previsión meteorológica",
+          "temperature_entity": "Temperatura exterior",
+          "humidity_entity": "Humedad exterior",
+          "pv_power_entity": "Potencia FV",
+          "pv_peak_w": "Potencia FV a pleno sol"
+        },
+        "data_description": {
+          "weather_entity": "Entidad meteorológica con previsión por horas",
+          "temperature_entity": "Temperatura exterior (a la sombra). Opcional: sin ella, DryingPilot usa solo la previsión.",
+          "humidity_entity": "Humedad exterior (a la sombra). Opcional: si falta, se calcula a partir del punto de rocío previsto.",
+          "pv_power_entity": "Potencia FV como indicador de sol. Opcional: si no, se usan la nubosidad y el índice UV previstos.",
+          "pv_peak_w": "Potencia que se considera pleno sol"
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Ya está configurado."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ajustar DryingPilot",
+        "data": {
+          "weather_entity": "Previsión meteorológica",
+          "temperature_entity": "Temperatura exterior",
+          "humidity_entity": "Humedad exterior",
+          "pv_power_entity": "Potencia FV",
+          "pv_peak_w": "Potencia FV a pleno sol",
+          "notify_targets": "Notificar a",
+          "notify_types": "Notificaciones",
+          "a": "Factor a (evaporación base)",
+          "b": "Factor b (viento)",
+          "sun_gain": "Bonificación solar a pleno sol",
+          "min_rate": "Tasa mínima para una ventana de secado",
+          "rain_mm": "Lluvia a partir de precipitación",
+          "rain_probability": "Lluvia a partir de probabilidad",
+          "target_light": "Objetivo ropa ligera",
+          "target_normal": "Objetivo ropa normal",
+          "target_heavy": "Objetivo ropa pesada",
+          "rewet_rh": "Húmeda a partir de una humedad relativa de",
+          "rewet_rh_exit": "Seca de nuevo a partir de (como máximo)",
+          "dew_margin": "Riesgo de rocío: temperatura sobre el punto de rocío menor que",
+          "reset_calibration": "Restablecer calibración",
+          "spin_rpm": "Velocidad de centrifugado de tu lavadora",
+          "predry_min_hours": "Presecado: duración mínima de la ventana"
+        },
+        "data_description": {
+          "weather_entity": "Entidad meteorológica con previsión por horas",
+          "temperature_entity": "Temperatura exterior (a la sombra). Opcional: sin ella, DryingPilot usa solo la previsión.",
+          "humidity_entity": "Humedad exterior (a la sombra). Opcional: si falta, se calcula a partir del punto de rocío previsto.",
+          "pv_power_entity": "Potencia FV como indicador de sol. Opcional: si no, se usan la nubosidad y el índice UV previstos.",
+          "pv_peak_w": "Potencia que se considera pleno sol",
+          "notify_targets": "Dispositivos de la app de Home Assistant que reciben notificaciones. Vacío = sin notificaciones.",
+          "notify_types": "Qué notificaciones se envían",
+          "rewet_rh": "A partir de esta humedad la ropa vuelve a absorber humedad (por defecto 90 %)",
+          "rewet_rh_exit": "Histéresis: la fase húmeda termina con este valor o menos",
+          "dew_margin": "En noches despejadas se forma rocío en la ropa cuando el aire está así de cerca de su punto de rocío",
+          "reset_calibration": "Se descartan los factores aprendidos; los ciclos anteriores se conservan pero ya no cuentan.",
+          "spin_rpm": "Menos centrifugado = más agua al inicio = secado más largo",
+          "predry_min_hours": "No se proponen ventanas parciales más cortas"
+        }
+      }
+    }
+  },
+  "device": {
+    "laundry": {
+      "name": "Secado de ropa"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "mode": {
+        "name": "Modo",
+        "state": {
+          "indoor": "Secar dentro",
+          "later": "Más tarde",
+          "hang_now": "Tender ahora",
+          "drying": "Secando",
+          "tight": "Justo",
+          "bring_in": "Recoger",
+          "dry": "Seca",
+          "pre_dry": "Presecado",
+          "paused": "No se seca"
+        }
+      },
+      "status": {
+        "name": "Estado",
+        "state": {
+          "none": "No seca",
+          "slow": "Lento",
+          "moderate": "Regular",
+          "good": "Bueno",
+          "ideal": "Ideal"
+        }
+      },
+      "rate": {
+        "name": "Tasa de secado"
+      },
+      "vpd": {
+        "name": "Déficit de presión de vapor"
+      },
+      "progress": {
+        "name": "Progreso"
+      },
+      "possible_until": {
+        "name": "Posible hasta"
+      },
+      "dry_at": {
+        "name": "Seca prevista"
+      },
+      "next_window_start": {
+        "name": "Inicio de la próxima ventana"
+      },
+      "next_window_end": {
+        "name": "Fin de la próxima ventana"
+      },
+      "next_opportunity": {
+        "name": "Próxima oportunidad",
+        "state": {
+          "window": "Ventana de secado",
+          "pre_dry": "Presecado",
+          "none": "Ninguna"
+        },
+        "state_attributes": {
+          "start": {
+            "name": "Inicio"
+          },
+          "end": {
+            "name": "Fin"
+          },
+          "gain": {
+            "name": "Ganancia"
+          }
+        }
+      },
+      "calibration": {
+        "name": "Calibración",
+        "state": {
+          "off": "Desactivada",
+          "learning": "Aprendiendo",
+          "calibrated": "Calibrada"
+        }
+      }
+    },
+    "switch": {
+      "calibration_enabled": {
+        "name": "Aprender de las respuestas"
+      }
+    },
+    "binary_sensor": {
+      "bring_in": {
+        "name": "Recoger"
+      },
+      "dry": {
+        "name": "Seca"
+      }
+    },
+    "select": {
+      "location": {
+        "name": "Ubicación",
+        "state": {
+          "line": "Tendedero",
+          "covered": "Cubierto"
+        }
+      },
+      "laundry_type": {
+        "name": "Tipo de ropa",
+        "state": {
+          "light": "Ligera",
+          "normal": "Normal",
+          "heavy": "Pesada"
+        }
+      }
+    },
+    "button": {
+      "start": {
+        "name": "Tendida"
+      },
+      "stop": {
+        "name": "Recogida"
+      }
+    }
+  },
+  "selector": {
+    "location": {
+      "options": {
+        "line": "Tendedero",
+        "covered": "Cubierto"
+      }
+    },
+    "laundry_type": {
+      "options": {
+        "light": "Ligera",
+        "normal": "Normal",
+        "heavy": "Pesada"
+      }
+    },
+    "notify_types": {
+      "options": {
+        "bring_in": "Recoger (lluvia o aire húmedo)",
+        "dry": "La ropa está seca",
+        "window_ending": "La ventana termina pronto (justo)",
+        "good_window": "Buen tiempo para tender (máx. 1 vez al día)",
+        "iron_damp": "Lista para planchar (aprox. 85 % seca)",
+        "predry_window": "Presecado posible (máx. 1 vez al día)",
+        "predry_end": "Presecado terminado"
+      }
+    },
+    "answer": {
+      "options": {
+        "dry": "Seca",
+        "damp": "Aún húmeda",
+        "unknown": "No lo sé",
+        "later": "Preguntar luego"
+      }
+    },
+    "stop_feedback": {
+      "options": {
+        "dry": "Seca",
+        "damp": "Aún húmeda",
+        "unknown": "No lo sé"
+      }
+    }
+  },
+  "services": {
+    "start": {
+      "name": "Tender la ropa",
+      "description": "Inicia el secado y pone el progreso a 0.",
+      "fields": {
+        "location": {
+          "name": "Ubicación",
+          "description": "Tendedero o cubierto"
+        },
+        "laundry_type": {
+          "name": "Tipo de ropa",
+          "description": "Ligera, normal o pesada"
+        },
+        "config_entry_id": {
+          "name": "Entrada",
+          "description": "Solo necesario con varias entradas"
+        }
+      }
+    },
+    "stop": {
+      "name": "Ropa recogida",
+      "description": "Termina el secado.",
+      "fields": {
+        "feedback": {
+          "name": "Respuesta",
+          "description": "Opcional: ¿cómo estaba la ropa al recogerla?"
+        },
+        "config_entry_id": {
+          "name": "Entrada",
+          "description": "Solo necesario con varias entradas"
+        }
+      }
+    },
+    "feedback": {
+      "name": "Respuesta sobre la ropa",
+      "description": "Respuesta a «¿Está seca la ropa?»: DryingPilot aprende de ella.",
+      "fields": {
+        "answer": {
+          "name": "Respuesta",
+          "description": "Seca, aún húmeda, no lo sé o preguntar luego"
+        },
+        "config_entry_id": {
+          "name": "Entrada",
+          "description": "Solo necesario con varias entradas"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "entry_not_found": {
+      "message": "No se encontró ninguna entrada (única) de DryingPilot."
+    }
+  }
+}

@@ -1,0 +1,285 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configurer DryingPilot",
+        "data": {
+          "weather_entity": "Prévisions météo",
+          "temperature_entity": "Température extérieure",
+          "humidity_entity": "Humidité extérieure",
+          "pv_power_entity": "Puissance PV",
+          "pv_peak_w": "Puissance PV en plein soleil"
+        },
+        "data_description": {
+          "weather_entity": "Entité météo avec prévisions horaires",
+          "temperature_entity": "Température extérieure (à l'ombre). Facultatif – sans elle, DryingPilot utilise uniquement les prévisions.",
+          "humidity_entity": "Humidité extérieure (à l'ombre). Facultatif – si absente, elle est calculée à partir du point de rosée prévu.",
+          "pv_power_entity": "Puissance PV comme indicateur d'ensoleillement. Facultatif – sinon la nébulosité et l'indice UV prévus sont utilisés.",
+          "pv_peak_w": "Puissance considérée comme plein soleil"
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Déjà configuré."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Ajuster DryingPilot",
+        "data": {
+          "weather_entity": "Prévisions météo",
+          "temperature_entity": "Température extérieure",
+          "humidity_entity": "Humidité extérieure",
+          "pv_power_entity": "Puissance PV",
+          "pv_peak_w": "Puissance PV en plein soleil",
+          "notify_targets": "Notifier",
+          "notify_types": "Notifications",
+          "a": "Facteur a (évaporation de base)",
+          "b": "Facteur b (vent)",
+          "sun_gain": "Bonus soleil en plein soleil",
+          "min_rate": "Taux minimal pour un créneau de séchage",
+          "rain_mm": "Pluie à partir de précipitations",
+          "rain_probability": "Pluie à partir de probabilité",
+          "target_light": "Objectif linge léger",
+          "target_normal": "Objectif linge normal",
+          "target_heavy": "Objectif linge lourd",
+          "rewet_rh": "Humide à partir d'une humidité relative de",
+          "rewet_rh_exit": "De nouveau sec à partir de (au plus)",
+          "dew_margin": "Risque de rosée : température au-dessus du point de rosée de moins de",
+          "reset_calibration": "Réinitialiser l'étalonnage",
+          "spin_rpm": "Vitesse d'essorage de votre lave-linge",
+          "predry_min_hours": "Pré-séchage : durée minimale du créneau"
+        },
+        "data_description": {
+          "weather_entity": "Entité météo avec prévisions horaires",
+          "temperature_entity": "Température extérieure (à l'ombre). Facultatif – sans elle, DryingPilot utilise uniquement les prévisions.",
+          "humidity_entity": "Humidité extérieure (à l'ombre). Facultatif – si absente, elle est calculée à partir du point de rosée prévu.",
+          "pv_power_entity": "Puissance PV comme indicateur d'ensoleillement. Facultatif – sinon la nébulosité et l'indice UV prévus sont utilisés.",
+          "pv_peak_w": "Puissance considérée comme plein soleil",
+          "notify_targets": "Appareils de l'application Home Assistant qui reçoivent les notifications. Vide = aucune notification.",
+          "notify_types": "Notifications à envoyer",
+          "rewet_rh": "À partir de cette humidité, le linge reprend l'humidité (par défaut 90 %)",
+          "rewet_rh_exit": "Hystérésis : la phase humide se termine à cette valeur ou en dessous",
+          "dew_margin": "Par nuit claire, la rosée se forme sur le linge lorsque l'air est aussi proche de son point de rosée",
+          "reset_calibration": "Les facteurs appris sont abandonnés ; les cycles passés restent enregistrés mais ne comptent plus.",
+          "spin_rpm": "Moins d'essorage = plus d'eau au départ = séchage plus long",
+          "predry_min_hours": "Les créneaux partiels plus courts ne sont pas proposés"
+        }
+      }
+    }
+  },
+  "device": {
+    "laundry": {
+      "name": "Séchage du linge"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "mode": {
+        "name": "Mode",
+        "state": {
+          "indoor": "Sécher à l'intérieur",
+          "later": "Plus tard",
+          "hang_now": "Étendre maintenant",
+          "drying": "Séchage",
+          "tight": "Juste",
+          "bring_in": "À rentrer",
+          "dry": "Sec",
+          "pre_dry": "Pré-séchage",
+          "paused": "Ne sèche pas"
+        }
+      },
+      "status": {
+        "name": "État",
+        "state": {
+          "none": "Ne sèche pas",
+          "slow": "Lent",
+          "moderate": "Moyen",
+          "good": "Bon",
+          "ideal": "Idéal"
+        }
+      },
+      "rate": {
+        "name": "Taux de séchage"
+      },
+      "vpd": {
+        "name": "Déficit de pression de vapeur"
+      },
+      "progress": {
+        "name": "Progression"
+      },
+      "possible_until": {
+        "name": "Possible jusqu'à"
+      },
+      "dry_at": {
+        "name": "Sec prévu"
+      },
+      "next_window_start": {
+        "name": "Début du prochain créneau"
+      },
+      "next_window_end": {
+        "name": "Fin du prochain créneau"
+      },
+      "next_opportunity": {
+        "name": "Prochaine occasion",
+        "state": {
+          "window": "Créneau de séchage",
+          "pre_dry": "Pré-séchage",
+          "none": "Aucune"
+        },
+        "state_attributes": {
+          "start": {
+            "name": "Début"
+          },
+          "end": {
+            "name": "Fin"
+          },
+          "gain": {
+            "name": "Gain"
+          }
+        }
+      },
+      "calibration": {
+        "name": "Étalonnage",
+        "state": {
+          "off": "Désactivé",
+          "learning": "En apprentissage",
+          "calibrated": "Étalonné"
+        }
+      }
+    },
+    "switch": {
+      "calibration_enabled": {
+        "name": "Apprendre des retours"
+      }
+    },
+    "binary_sensor": {
+      "bring_in": {
+        "name": "À rentrer"
+      },
+      "dry": {
+        "name": "Sec"
+      }
+    },
+    "select": {
+      "location": {
+        "name": "Emplacement",
+        "state": {
+          "line": "Corde à linge",
+          "covered": "Abrité"
+        }
+      },
+      "laundry_type": {
+        "name": "Type de linge",
+        "state": {
+          "light": "Léger",
+          "normal": "Normal",
+          "heavy": "Lourd"
+        }
+      }
+    },
+    "button": {
+      "start": {
+        "name": "Étendu"
+      },
+      "stop": {
+        "name": "Rentré"
+      }
+    }
+  },
+  "selector": {
+    "location": {
+      "options": {
+        "line": "Corde à linge",
+        "covered": "Abrité"
+      }
+    },
+    "laundry_type": {
+      "options": {
+        "light": "Léger",
+        "normal": "Normal",
+        "heavy": "Lourd"
+      }
+    },
+    "notify_types": {
+      "options": {
+        "bring_in": "À rentrer (pluie ou air humide)",
+        "dry": "Le linge est sec",
+        "window_ending": "Fin de créneau proche (juste)",
+        "good_window": "Beau temps pour sécher (max. 1× par jour)",
+        "iron_damp": "Prêt à repasser (environ 85 % sec)",
+        "predry_window": "Pré-séchage possible (max. 1× par jour)",
+        "predry_end": "Pré-séchage terminé"
+      }
+    },
+    "answer": {
+      "options": {
+        "dry": "Sec",
+        "damp": "Encore humide",
+        "unknown": "Je ne sais pas",
+        "later": "Redemander plus tard"
+      }
+    },
+    "stop_feedback": {
+      "options": {
+        "dry": "Sec",
+        "damp": "Encore humide",
+        "unknown": "Je ne sais pas"
+      }
+    }
+  },
+  "services": {
+    "start": {
+      "name": "Étendre le linge",
+      "description": "Démarre le séchage et remet la progression à 0.",
+      "fields": {
+        "location": {
+          "name": "Emplacement",
+          "description": "Corde à linge ou abrité"
+        },
+        "laundry_type": {
+          "name": "Type de linge",
+          "description": "Léger, normal ou lourd"
+        },
+        "config_entry_id": {
+          "name": "Entrée",
+          "description": "Nécessaire uniquement avec plusieurs entrées"
+        }
+      }
+    },
+    "stop": {
+      "name": "Linge rentré",
+      "description": "Termine le séchage.",
+      "fields": {
+        "feedback": {
+          "name": "Retour",
+          "description": "Facultatif : dans quel état était le linge en le rentrant ?"
+        },
+        "config_entry_id": {
+          "name": "Entrée",
+          "description": "Nécessaire uniquement avec plusieurs entrées"
+        }
+      }
+    },
+    "feedback": {
+      "name": "Retour sur le linge",
+      "description": "Réponse à « Le linge est-il sec ? » – DryingPilot en tire des leçons.",
+      "fields": {
+        "answer": {
+          "name": "Réponse",
+          "description": "Sec, encore humide, je ne sais pas ou redemander plus tard"
+        },
+        "config_entry_id": {
+          "name": "Entrée",
+          "description": "Nécessaire uniquement avec plusieurs entrées"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "entry_not_found": {
+      "message": "Aucune entrée DryingPilot (unique) trouvée."
+    }
+  }
+}

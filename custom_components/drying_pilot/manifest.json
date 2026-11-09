@@ -1,0 +1,22 @@
+{
+  "domain": "drying_pilot",
+  "name": "DryingPilot",
+  "after_dependencies": [
+    "frontend",
+    "http"
+  ],
+  "codeowners": [
+    "@BlackBird8018"
+  ],
+  "config_flow": true,
+  "dependencies": [
+    "weather"
+  ],
+  "documentation": "https://github.com/BlackBird8018/ha-drying-pilot",
+  "integration_type": "service",
+  "iot_class": "calculated",
+  "issue_tracker": "https://github.com/BlackBird8018/ha-drying-pilot/issues",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "1.0.0"
+}

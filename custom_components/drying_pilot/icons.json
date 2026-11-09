@@ -1,0 +1,121 @@
+{
+  "entity": {
+    "sensor": {
+      "mode": {
+        "default": "mdi:tshirt-crew-outline",
+        "state": {
+          "indoor": "mdi:home-outline",
+          "later": "mdi:calendar-clock",
+          "hang_now": "mdi:weather-sunny",
+          "drying": "mdi:tshirt-crew-outline",
+          "tight": "mdi:timer-sand",
+          "bring_in": "mdi:weather-pouring",
+          "dry": "mdi:check-circle-outline",
+          "pre_dry": "mdi:weather-partly-cloudy",
+          "paused": "mdi:pause-circle-outline"
+        }
+      },
+      "status": {
+        "default": "mdi:weather-partly-cloudy",
+        "state": {
+          "none": "mdi:water-off-outline",
+          "slow": "mdi:speedometer-slow",
+          "moderate": "mdi:speedometer-medium",
+          "good": "mdi:speedometer",
+          "ideal": "mdi:weather-sunny"
+        }
+      },
+      "rate": {
+        "default": "mdi:water-minus-outline"
+      },
+      "vpd": {
+        "default": "mdi:water-percent"
+      },
+      "progress": {
+        "default": "mdi:progress-check"
+      },
+      "possible_until": {
+        "default": "mdi:clock-end"
+      },
+      "dry_at": {
+        "default": "mdi:clock-check-outline"
+      },
+      "next_window_start": {
+        "default": "mdi:calendar-start"
+      },
+      "next_window_end": {
+        "default": "mdi:calendar-end"
+      },
+      "calibration": {
+        "default": "mdi:tune-variant",
+        "state": {
+          "off": "mdi:tune-variant",
+          "learning": "mdi:school-outline",
+          "calibrated": "mdi:check-decagram-outline"
+        }
+      },
+      "next_opportunity": {
+        "default": "mdi:calendar-search",
+        "state": {
+          "window": "mdi:calendar-check",
+          "pre_dry": "mdi:weather-partly-cloudy",
+          "none": "mdi:calendar-remove"
+        }
+      }
+    },
+    "binary_sensor": {
+      "bring_in": {
+        "default": "mdi:basket-outline",
+        "state": {
+          "on": "mdi:basket-unfill"
+        }
+      },
+      "dry": {
+        "default": "mdi:tshirt-crew-outline",
+        "state": {
+          "on": "mdi:check-circle-outline"
+        }
+      }
+    },
+    "select": {
+      "location": {
+        "default": "mdi:map-marker-outline",
+        "state": {
+          "line": "mdi:weather-sunny",
+          "covered": "mdi:umbrella-outline"
+        }
+      },
+      "laundry_type": {
+        "default": "mdi:weight"
+      }
+    },
+    "button": {
+      "start": {
+        "default": "mdi:hanger"
+      },
+      "stop": {
+        "default": "mdi:basket-check-outline"
+      }
+    },
+    "switch": {
+      "calibration_enabled": {
+        "default": "mdi:school-outline",
+        "state": {
+          "off": "mdi:school-outline",
+          "on": "mdi:school"
+        }
+      }
+    }
+  },
+  "services": {
+    "start": {
+      "service": "mdi:hanger"
+    },
+    "stop": {
+      "service": "mdi:basket-check-outline"
+    },
+    "feedback": {
+      "service": "mdi:hand-back-right-outline"
+    }
+  }
+}

@@ -1,0 +1,285 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Set up DryingPilot",
+        "data": {
+          "weather_entity": "Weather forecast",
+          "temperature_entity": "Outdoor temperature",
+          "humidity_entity": "Outdoor humidity",
+          "pv_power_entity": "PV power",
+          "pv_peak_w": "PV power at full sun"
+        },
+        "data_description": {
+          "weather_entity": "Weather entity with hourly forecast",
+          "temperature_entity": "Outdoor temperature (in the shade). Optional – without it DryingPilot uses the forecast only.",
+          "humidity_entity": "Outdoor humidity (in the shade). Optional – if missing, it is derived from the forecast dew point.",
+          "pv_power_entity": "PV power as a sunshine proxy. Optional – without it the forecast cloud cover and UV index are used.",
+          "pv_peak_w": "Power that counts as full sun"
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Adjust DryingPilot",
+        "data": {
+          "weather_entity": "Weather forecast",
+          "temperature_entity": "Outdoor temperature",
+          "humidity_entity": "Outdoor humidity",
+          "pv_power_entity": "PV power",
+          "pv_peak_w": "PV power at full sun",
+          "notify_targets": "Notify",
+          "notify_types": "Notifications",
+          "a": "Factor a (base evaporation)",
+          "b": "Factor b (wind)",
+          "sun_gain": "Sun bonus at full sun",
+          "min_rate": "Minimum rate for a drying window",
+          "rain_mm": "Rain from precipitation",
+          "rain_probability": "Rain from probability",
+          "target_light": "Target light laundry",
+          "target_normal": "Target normal laundry",
+          "target_heavy": "Target heavy laundry",
+          "rewet_rh": "Damp from relative humidity",
+          "rewet_rh_exit": "Dry again at or below",
+          "dew_margin": "Dew risk: temperature above dew point less than",
+          "reset_calibration": "Reset calibration",
+          "spin_rpm": "Spin speed of your washing machine",
+          "predry_min_hours": "Pre-drying: minimum window length"
+        },
+        "data_description": {
+          "weather_entity": "Weather entity with hourly forecast",
+          "temperature_entity": "Outdoor temperature (in the shade). Optional – without it DryingPilot uses the forecast only.",
+          "humidity_entity": "Outdoor humidity (in the shade). Optional – if missing, it is derived from the forecast dew point.",
+          "pv_power_entity": "PV power as a sunshine proxy. Optional – without it the forecast cloud cover and UV index are used.",
+          "pv_peak_w": "Power that counts as full sun",
+          "notify_targets": "Companion app devices that receive notifications. Empty = no notifications.",
+          "notify_types": "Which notifications are sent",
+          "rewet_rh": "From this humidity laundry takes up moisture again (default 90 %)",
+          "rewet_rh_exit": "Hysteresis: the humid phase ends at or below this value",
+          "dew_margin": "On clear nights dew forms on the laundry when the air is this close to its dew point",
+          "reset_calibration": "Learned factors are discarded; past runs stay stored but no longer count.",
+          "spin_rpm": "Less spin = more water at the start = longer drying",
+          "predry_min_hours": "Partial windows shorter than this are not suggested for pre-drying"
+        }
+      }
+    }
+  },
+  "device": {
+    "laundry": {
+      "name": "Laundry drying"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "mode": {
+        "name": "Mode",
+        "state": {
+          "indoor": "Dry indoors",
+          "later": "Later",
+          "hang_now": "Hang out now",
+          "drying": "Drying",
+          "tight": "Tight",
+          "bring_in": "Bring in",
+          "dry": "Dry",
+          "pre_dry": "Pre-dry outside",
+          "paused": "Not drying"
+        }
+      },
+      "status": {
+        "name": "Status",
+        "state": {
+          "none": "Not drying",
+          "slow": "Slow",
+          "moderate": "Moderate",
+          "good": "Good",
+          "ideal": "Ideal"
+        }
+      },
+      "rate": {
+        "name": "Drying rate"
+      },
+      "vpd": {
+        "name": "Vapour pressure deficit"
+      },
+      "progress": {
+        "name": "Progress"
+      },
+      "possible_until": {
+        "name": "Possible until"
+      },
+      "dry_at": {
+        "name": "Expected dry"
+      },
+      "next_window_start": {
+        "name": "Next window start"
+      },
+      "next_window_end": {
+        "name": "Next window end"
+      },
+      "next_opportunity": {
+        "name": "Next opportunity",
+        "state": {
+          "window": "Drying window",
+          "pre_dry": "Pre-drying",
+          "none": "None"
+        },
+        "state_attributes": {
+          "start": {
+            "name": "Start"
+          },
+          "end": {
+            "name": "End"
+          },
+          "gain": {
+            "name": "Gain"
+          }
+        }
+      },
+      "calibration": {
+        "name": "Calibration",
+        "state": {
+          "off": "Off",
+          "learning": "Learning",
+          "calibrated": "Calibrated"
+        }
+      }
+    },
+    "switch": {
+      "calibration_enabled": {
+        "name": "Learn from feedback"
+      }
+    },
+    "binary_sensor": {
+      "bring_in": {
+        "name": "Bring in"
+      },
+      "dry": {
+        "name": "Dry"
+      }
+    },
+    "select": {
+      "location": {
+        "name": "Location",
+        "state": {
+          "line": "Clothesline",
+          "covered": "Covered"
+        }
+      },
+      "laundry_type": {
+        "name": "Laundry type",
+        "state": {
+          "light": "Light",
+          "normal": "Normal",
+          "heavy": "Heavy"
+        }
+      }
+    },
+    "button": {
+      "start": {
+        "name": "Hung out"
+      },
+      "stop": {
+        "name": "Brought in"
+      }
+    }
+  },
+  "selector": {
+    "location": {
+      "options": {
+        "line": "Clothesline",
+        "covered": "Covered"
+      }
+    },
+    "laundry_type": {
+      "options": {
+        "light": "Light",
+        "normal": "Normal",
+        "heavy": "Heavy"
+      }
+    },
+    "notify_types": {
+      "options": {
+        "bring_in": "Bring in (rain or humid air)",
+        "dry": "Laundry is dry",
+        "window_ending": "Window ending soon (tight)",
+        "good_window": "Good drying weather (max. once a day)",
+        "iron_damp": "Iron-damp (about 85 % dry)",
+        "predry_window": "Pre-drying possible (max. once a day)",
+        "predry_end": "Pre-drying finished"
+      }
+    },
+    "answer": {
+      "options": {
+        "dry": "Dry",
+        "damp": "Still damp",
+        "unknown": "Don't know",
+        "later": "Ask later"
+      }
+    },
+    "stop_feedback": {
+      "options": {
+        "dry": "Dry",
+        "damp": "Still damp",
+        "unknown": "Don't know"
+      }
+    }
+  },
+  "services": {
+    "start": {
+      "name": "Hang out laundry",
+      "description": "Starts drying and resets progress.",
+      "fields": {
+        "location": {
+          "name": "Location",
+          "description": "Clothesline or covered"
+        },
+        "laundry_type": {
+          "name": "Laundry type",
+          "description": "Light, normal or heavy"
+        },
+        "config_entry_id": {
+          "name": "Entry",
+          "description": "Only needed with several entries"
+        }
+      }
+    },
+    "stop": {
+      "name": "Laundry brought in",
+      "description": "Ends drying.",
+      "fields": {
+        "feedback": {
+          "name": "Feedback",
+          "description": "Optional: how was the laundry when it was brought in?"
+        },
+        "config_entry_id": {
+          "name": "Entry",
+          "description": "Only needed with several entries"
+        }
+      }
+    },
+    "feedback": {
+      "name": "Laundry feedback",
+      "description": "Answer to \"Is the laundry dry?\" – DryingPilot learns from it.",
+      "fields": {
+        "answer": {
+          "name": "Answer",
+          "description": "Dry, still damp, don't know or ask later"
+        },
+        "config_entry_id": {
+          "name": "Entry",
+          "description": "Only needed with several entries"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "entry_not_found": {
+      "message": "No (unique) DryingPilot entry found."
+    }
+  }
+}

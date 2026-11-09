@@ -1,0 +1,57 @@
+start:
+  fields:
+    location:
+      required: false
+      selector:
+        select:
+          translation_key: location
+          options:
+            - line
+            - covered
+    laundry_type:
+      required: false
+      selector:
+        select:
+          translation_key: laundry_type
+          options:
+            - light
+            - normal
+            - heavy
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: drying_pilot
+stop:
+  fields:
+    feedback:
+      required: false
+      selector:
+        select:
+          translation_key: stop_feedback
+          options:
+            - dry
+            - damp
+            - unknown
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: drying_pilot
+feedback:
+  fields:
+    answer:
+      required: true
+      selector:
+        select:
+          translation_key: answer
+          options:
+            - dry
+            - damp
+            - unknown
+            - later
+    config_entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: drying_pilot

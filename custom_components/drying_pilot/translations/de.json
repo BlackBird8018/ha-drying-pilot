@@ -1,0 +1,285 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "DryingPilot einrichten",
+        "data": {
+          "weather_entity": "Wettervorhersage",
+          "temperature_entity": "Außentemperatur",
+          "humidity_entity": "Außenluftfeuchte",
+          "pv_power_entity": "PV-Leistung",
+          "pv_peak_w": "PV-Leistung bei voller Sonne"
+        },
+        "data_description": {
+          "weather_entity": "Wetter-Entity mit stündlicher Vorhersage",
+          "temperature_entity": "Außentemperatur (im Schatten). Optional – ohne rechnet DryingPilot nur mit der Vorhersage.",
+          "humidity_entity": "Außenluftfeuchte (im Schatten). Optional – fehlt sie, wird sie aus dem Taupunkt der Vorhersage berechnet.",
+          "pv_power_entity": "PV-Leistung als Maß für die Sonne. Optional – ohne werden Bewölkung und UV-Index der Vorhersage genutzt.",
+          "pv_peak_w": "Leistung, die als volle Sonne gilt"
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "Bereits eingerichtet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "DryingPilot anpassen",
+        "data": {
+          "weather_entity": "Wettervorhersage",
+          "temperature_entity": "Außentemperatur",
+          "humidity_entity": "Außenluftfeuchte",
+          "pv_power_entity": "PV-Leistung",
+          "pv_peak_w": "PV-Leistung bei voller Sonne",
+          "notify_targets": "Benachrichtigen an",
+          "notify_types": "Hinweise",
+          "a": "Faktor a (Grundverdunstung)",
+          "b": "Faktor b (Wind)",
+          "sun_gain": "Sonnenbonus bei voller Sonne",
+          "min_rate": "Mindestrate für ein Trocknungsfenster",
+          "rain_mm": "Regen ab Niederschlag",
+          "rain_probability": "Regen ab Wahrscheinlichkeit",
+          "target_light": "Ziel leichte Wäsche",
+          "target_normal": "Ziel normale Wäsche",
+          "target_heavy": "Ziel schwere Wäsche",
+          "rewet_rh": "Feucht ab relativer Luftfeuchte",
+          "rewet_rh_exit": "Wieder trocken ab höchstens",
+          "dew_margin": "Taurisiko: Temperatur über Taupunkt weniger als",
+          "reset_calibration": "Kalibrierung zurücksetzen",
+          "spin_rpm": "Schleuderdrehzahl deiner Waschmaschine",
+          "predry_min_hours": "Vortrocknen: Mindestlänge des Fensters"
+        },
+        "data_description": {
+          "weather_entity": "Wetter-Entity mit stündlicher Vorhersage",
+          "temperature_entity": "Außentemperatur (im Schatten). Optional – ohne rechnet DryingPilot nur mit der Vorhersage.",
+          "humidity_entity": "Außenluftfeuchte (im Schatten). Optional – fehlt sie, wird sie aus dem Taupunkt der Vorhersage berechnet.",
+          "pv_power_entity": "PV-Leistung als Maß für die Sonne. Optional – ohne werden Bewölkung und UV-Index der Vorhersage genutzt.",
+          "pv_peak_w": "Leistung, die als volle Sonne gilt",
+          "notify_targets": "Geräte der Home-Assistant-App, die Hinweise bekommen. Leer = keine Benachrichtigungen.",
+          "notify_types": "Welche Hinweise verschickt werden",
+          "rewet_rh": "Ab dieser Luftfeuchte nimmt Wäsche wieder Feuchtigkeit auf (Standard 90 %)",
+          "rewet_rh_exit": "Hysterese: die feuchte Phase endet erst bei oder unter diesem Wert",
+          "dew_margin": "In klaren Nächten bildet sich Tau auf der Wäsche, wenn die Luft so nah am Taupunkt ist",
+          "reset_calibration": "Gelernte Faktoren werden verworfen; bisherige Runden bleiben gespeichert, zählen aber nicht mehr.",
+          "spin_rpm": "Weniger Drehzahl = mehr Wasser am Anfang = längere Trocknung",
+          "predry_min_hours": "Kürzere Teilfenster werden nicht zum Vortrocknen vorgeschlagen"
+        }
+      }
+    }
+  },
+  "device": {
+    "laundry": {
+      "name": "Wäschetrocknung"
+    }
+  },
+  "entity": {
+    "sensor": {
+      "mode": {
+        "name": "Modus",
+        "state": {
+          "indoor": "Drinnen trocknen",
+          "later": "Später",
+          "hang_now": "Jetzt aufhängen",
+          "drying": "Trocknet",
+          "tight": "Wird knapp",
+          "bring_in": "Reinholen",
+          "dry": "Trocken",
+          "pre_dry": "Vortrocknen",
+          "paused": "Trocknet gerade nicht"
+        }
+      },
+      "status": {
+        "name": "Status",
+        "state": {
+          "none": "Trocknet nicht",
+          "slow": "Zäh",
+          "moderate": "Geht so",
+          "good": "Gut",
+          "ideal": "Ideal"
+        }
+      },
+      "rate": {
+        "name": "Trocknungsrate"
+      },
+      "vpd": {
+        "name": "Sättigungsdefizit"
+      },
+      "progress": {
+        "name": "Fortschritt"
+      },
+      "possible_until": {
+        "name": "Möglich bis"
+      },
+      "dry_at": {
+        "name": "Voraussichtlich trocken"
+      },
+      "next_window_start": {
+        "name": "Nächstes Fenster Beginn"
+      },
+      "next_window_end": {
+        "name": "Nächstes Fenster Ende"
+      },
+      "next_opportunity": {
+        "name": "Nächste Gelegenheit",
+        "state": {
+          "window": "Trockenfenster",
+          "pre_dry": "Vortrocknen",
+          "none": "Keine"
+        },
+        "state_attributes": {
+          "start": {
+            "name": "Beginn"
+          },
+          "end": {
+            "name": "Ende"
+          },
+          "gain": {
+            "name": "Trocknungsanteil"
+          }
+        }
+      },
+      "calibration": {
+        "name": "Kalibrierung",
+        "state": {
+          "off": "Aus",
+          "learning": "Lernt",
+          "calibrated": "Kalibriert"
+        }
+      }
+    },
+    "switch": {
+      "calibration_enabled": {
+        "name": "Aus Rückmeldungen lernen"
+      }
+    },
+    "binary_sensor": {
+      "bring_in": {
+        "name": "Reinholen"
+      },
+      "dry": {
+        "name": "Trocken"
+      }
+    },
+    "select": {
+      "location": {
+        "name": "Ort",
+        "state": {
+          "line": "Leine",
+          "covered": "Überdacht"
+        }
+      },
+      "laundry_type": {
+        "name": "Wäscheart",
+        "state": {
+          "light": "Leicht",
+          "normal": "Normal",
+          "heavy": "Schwer"
+        }
+      }
+    },
+    "button": {
+      "start": {
+        "name": "Aufgehängt"
+      },
+      "stop": {
+        "name": "Reingeholt"
+      }
+    }
+  },
+  "selector": {
+    "location": {
+      "options": {
+        "line": "Leine",
+        "covered": "Überdacht"
+      }
+    },
+    "laundry_type": {
+      "options": {
+        "light": "Leicht",
+        "normal": "Normal",
+        "heavy": "Schwer"
+      }
+    },
+    "notify_types": {
+      "options": {
+        "bring_in": "Reinholen (Regen oder feuchte Luft)",
+        "dry": "Wäsche ist trocken",
+        "window_ending": "Fenster endet bald (wird knapp)",
+        "good_window": "Gutes Trockenwetter (max. 1× täglich)",
+        "iron_damp": "Bügelfeucht (etwa 85 % trocken)",
+        "predry_window": "Vortrocknen möglich (max. 1× täglich)",
+        "predry_end": "Vortrocknen beendet"
+      }
+    },
+    "answer": {
+      "options": {
+        "dry": "Trocken",
+        "damp": "Noch feucht",
+        "unknown": "Weiß nicht",
+        "later": "Später fragen"
+      }
+    },
+    "stop_feedback": {
+      "options": {
+        "dry": "Trocken",
+        "damp": "Noch feucht",
+        "unknown": "Weiß nicht"
+      }
+    }
+  },
+  "services": {
+    "start": {
+      "name": "Wäsche aufhängen",
+      "description": "Startet die Trocknung und setzt den Fortschritt auf 0.",
+      "fields": {
+        "location": {
+          "name": "Ort",
+          "description": "Leine oder überdacht"
+        },
+        "laundry_type": {
+          "name": "Wäscheart",
+          "description": "Leicht, normal oder schwer"
+        },
+        "config_entry_id": {
+          "name": "Eintrag",
+          "description": "Nur nötig bei mehreren Einträgen"
+        }
+      }
+    },
+    "stop": {
+      "name": "Wäsche reingeholt",
+      "description": "Beendet die Trocknung.",
+      "fields": {
+        "feedback": {
+          "name": "Rückmeldung",
+          "description": "Optional: Wie war die Wäsche beim Reinholen?"
+        },
+        "config_entry_id": {
+          "name": "Eintrag",
+          "description": "Nur nötig bei mehreren Einträgen"
+        }
+      }
+    },
+    "feedback": {
+      "name": "Rückmeldung zur Wäsche",
+      "description": "Antwort auf „Ist die Wäsche trocken?“ – DryingPilot lernt daraus.",
+      "fields": {
+        "answer": {
+          "name": "Antwort",
+          "description": "Trocken, noch feucht, weiß nicht oder später fragen"
+        },
+        "config_entry_id": {
+          "name": "Eintrag",
+          "description": "Nur nötig bei mehreren Einträgen"
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "entry_not_found": {
+      "message": "Kein (eindeutiger) DryingPilot-Eintrag gefunden."
+    }
+  }
+}
