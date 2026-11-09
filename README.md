@@ -1,13 +1,14 @@
 <img src="custom_components/drying_pilot/brand/icon.png" alt="DryingPilot icon" width="96" align="right">
 
-# DryingPilot – laundry drying forecast & tracker for Home Assistant
+# DryingPilot – your co-pilot for laundry day in Home Assistant
 
 ![DryingPilot card in light and dark theme](docs/drying-pilot-card.png)
 
-DryingPilot tells you whether your laundry will dry outside – and when. It combines
-the hourly weather forecast with optional outdoor sensors and PV power to show
-the current drying status, upcoming drying windows, how long drying is possible
-and, once the laundry is out, its progress and when it is expected to be dry.
+DryingPilot guides your laundry day: it tells you **when to hang the laundry out**,
+follows it **while it dries** with live progress and the expected finish time, and
+alerts you to **bring it in** before rain or damp air. It combines the hourly weather
+forecast with optional outdoor sensors and PV power – and learns from your feedback
+how fast laundry dries at your place.
 
 **Languages:** English · Deutsch · Français · Español
 (follows the language set in Home Assistant; English is used as fallback)
