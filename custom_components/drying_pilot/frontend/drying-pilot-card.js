@@ -318,7 +318,9 @@ class DryingPilotCard extends HTMLElement {
         laundry: (lauState && lauState.state) || a.laundry_type || "normal",
       };
     }
-    const showControls = !hanging && (mode === "hang_now" || this._expanded);
+    // The picker only opens on an explicit tap on "Hang out" – also in hang_now,
+    // where the button is highlighted instead of opening the picker by itself.
+    const showControls = !hanging && this._expanded;
 
     const close = (act) =>
       `<button class="act close" data-act="${act}" aria-label="${tr(this._hass, "cancel")}"
@@ -329,10 +331,8 @@ class DryingPilotCard extends HTMLElement {
         : `<button class="act" data-act="stop">
            <ha-icon icon="mdi:basket-check-outline"></ha-icon><span>${tr(this._hass, "brought_in")}</span></button>`
       : showControls
-        ? mode === "hang_now"
-          ? ""
-          : close("collapse")
-        : `<button class="act ghost" data-act="expand">
+        ? close("collapse")
+        : `<button class="act${mode === "hang_now" ? "" : " ghost"}" data-act="expand">
              <ha-icon icon="mdi:hanger"></ha-icon><span>${tr(this._hass, "hang_out")}</span></button>`;
 
     const seg = (items, current, attr) =>
