@@ -174,6 +174,22 @@ def test_coordinator_flow(coordinator_cls):
         assert c.data.evaluation.mode.value in ("bring_in", "tight", "drying", "paused")
         assert hass.calls == 2  # refetched after 30 min (interval 15 min)
 
+        # forecast correction uses the mean of the last hour, progress the instant value
+        hass._states["sensor.t"] = _State("10.0")
+        _Clock.now += timedelta(minutes=5)
+        await c.async_refresh()
+        assert 6.0 < c.data.live.temperature < 10.0
+        hass._states["sensor.t"] = _State("6.0")
+
+        # review of the session: full hours so far, from the sensor
+        for _ in range(16):
+            _Clock.now += timedelta(minutes=15)
+            await c.async_refresh()
+        past = c.review(_Clock.now)
+        assert len(past) >= 3
+        assert all(h["past"] and h["measured"] for h in past)
+        assert {"rate", "humidity", "temperature", "rain"} <= set(past[0])
+
         # sensor unavailable: calculation continues with the forecast
         hass._states["sensor.t"] = _State("unavailable")
         _Clock.now += timedelta(minutes=5)

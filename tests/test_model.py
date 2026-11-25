@@ -485,3 +485,54 @@ def test_forecast_series_detail_fields():
     # without a target no pct
     (h2,) = forecast_series(slots, start, None, Location.COVERED, p)
     assert "pct" not in h2
+
+
+# --------------------------------------------------------------------------
+# Bridged gaps in the strip, review of the running session (1.2.0)
+# --------------------------------------------------------------------------
+
+
+def test_forecast_series_marks_bridged_gap_like_the_window():
+    from cdt.model import forecast_series
+
+    slots = make_slots(T0, [GOOD] * 2 + [SLOW] * 2 + [GOOD] * 2 + [SLOW])
+    series = forecast_series(slots, T0, None, Location.LINE, P)
+    assert [h.get("gap", False) for h in series] == [False] * 2 + [True] * 2 + [False] * 3
+    assert [h["blocked"] for h in series] == [None] * 6 + ["slow"]
+    # long gaps stay blocked
+    slots = make_slots(T0, [GOOD] + [SLOW] * 5 + [GOOD])
+    series = forecast_series(slots, T0, None, Location.LINE, P)
+    assert not any(h.get("gap") for h in series)
+
+
+def test_past_series_hourly_means_from_samples():
+    from cdt.model import past_series
+
+    start = T0 + timedelta(minutes=20)
+    now = T0 + timedelta(hours=3, minutes=10)
+    samples = []
+    for i in range(12):
+        t = start + timedelta(minutes=15 * i)
+        w = GOOD if t < T0 + timedelta(hours=2) else SLOW
+        samples.append((t, w, True))
+    series = past_series(samples, start, now, Location.LINE, P, target=100)
+    # hours 08, 09, 10 (11 is the current hour and comes from the forecast)
+    assert [h["time"] for h in series] == [
+        (T0 + timedelta(hours=i)).isoformat() for i in range(3)
+    ]
+    assert all(h["past"] and h["measured"] for h in series)
+    assert series[0]["rate"] == pytest.approx(drying_rate(GOOD, Location.LINE, P), abs=0.05)
+    assert series[2]["rate"] == pytest.approx(drying_rate(SLOW, Location.LINE, P), abs=0.05)
+    assert series[2]["humidity"] == round(SLOW.humidity)
+
+
+def test_past_series_limits_and_forecast_flag():
+    from cdt.model import past_series
+
+    start = T0
+    now = T0 + timedelta(hours=30)
+    samples = [(T0 + timedelta(minutes=30 * i), GOOD, False) for i in range(60)]
+    series = past_series(samples, start, now, Location.LINE, P, max_hours=24)
+    assert len(series) == 24
+    assert series[-1]["time"] == (T0 + timedelta(hours=29)).isoformat()
+    assert not any(h["measured"] for h in series)

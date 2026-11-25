@@ -7,7 +7,7 @@
  */
 
 const DOMAIN = "drying_pilot";
-const VERSION = "1.0.0";
+const VERSION = "1.2.0";
 
 // category limits in %/h (integration defaults)
 const CAT_LIMITS = [5, 10, 17, 30];
@@ -40,6 +40,7 @@ const I18N = {
     lg_ideal: "Ideal", lg_good: "Good", lg_moderate: "Moderate", lg_slow: "Slow", lg_none: "Not drying",
     lg_rain_likely: "Rain likely", lg_rain_possible: "Rain possible", lg_wet: "Laundry gets damp", lg_humid2: "Barely dries (humid)", lg_humid1: "Humid air",
     lg_window: "Drying window", lg_predry: "Pre-drying", lg_hint: "Tap the strip for the legend",
+    lg_past: "So far (measured)", lg_past_fc: "So far (forecast)", inf_measured: "measured {t} °C / {rh} %", inf_was_fc: "forecast at the time",
     inf_dries: "drying {p} %/h", inf_slow: "barely drying ({p} %/h)", inf_none: "not drying", inf_wet: "laundry gets damp (air {rh} %)",
     inf_rain: "rain {mm} mm ({prob} %)", inf_rain_p: "rain risk {prob} %",
   },
@@ -54,6 +55,7 @@ const I18N = {
     lg_ideal: "Ideal", lg_good: "Gut", lg_moderate: "Mäßig", lg_slow: "Langsam", lg_none: "Trocknet nicht",
     lg_rain_likely: "Regen wahrscheinlich", lg_rain_possible: "Regen möglich", lg_wet: "Wäsche wird klamm", lg_humid2: "Trocknet kaum (feucht)", lg_humid1: "Luft feucht",
     lg_window: "Trockenfenster", lg_predry: "Vortrocknen", lg_hint: "Streifen antippen für die Legende",
+    lg_past: "Bisher (gemessen)", lg_past_fc: "Bisher (Prognose)", inf_measured: "gemessen {t} °C / {rh} %", inf_was_fc: "damalige Prognose",
     inf_dries: "trocknet {p} %/h", inf_slow: "trocknet kaum ({p} %/h)", inf_none: "trocknet nicht", inf_wet: "wird klamm (Luft {rh} %)",
     inf_rain: "Regen {mm} mm ({prob} %)", inf_rain_p: "Regenrisiko {prob} %",
   },
@@ -68,6 +70,7 @@ const I18N = {
     lg_ideal: "Idéal", lg_good: "Bon", lg_moderate: "Moyen", lg_slow: "Lent", lg_none: "Ne sèche pas",
     lg_rain_likely: "Pluie probable", lg_rain_possible: "Pluie possible", lg_wet: "Le linge reprend l'humidité", lg_humid2: "Sèche à peine (humide)", lg_humid1: "Air humide",
     lg_window: "Créneau de séchage", lg_predry: "Pré-séchage", lg_hint: "Touchez la bande pour la légende",
+    lg_past: "Jusqu'ici (mesuré)", lg_past_fc: "Jusqu'ici (prévision)", inf_measured: "mesuré {t} °C / {rh} %", inf_was_fc: "prévision de l'époque",
     inf_dries: "sèche {p} %/h", inf_slow: "sèche à peine ({p} %/h)", inf_none: "ne sèche pas", inf_wet: "le linge reprend l'humidité (air {rh} %)",
     inf_rain: "pluie {mm} mm ({prob} %)", inf_rain_p: "risque de pluie {prob} %",
   },
@@ -82,6 +85,7 @@ const I18N = {
     lg_ideal: "Ideal", lg_good: "Bueno", lg_moderate: "Moderado", lg_slow: "Lento", lg_none: "No seca",
     lg_rain_likely: "Lluvia probable", lg_rain_possible: "Lluvia posible", lg_wet: "La ropa coge humedad", lg_humid2: "Apenas seca (húmedo)", lg_humid1: "Aire húmedo",
     lg_window: "Ventana de secado", lg_predry: "Presecado", lg_hint: "Toca la franja para ver la leyenda",
+    lg_past: "Hasta ahora (medido)", lg_past_fc: "Hasta ahora (previsión)", inf_measured: "medido {t} °C / {rh} %", inf_was_fc: "previsión de entonces",
     inf_dries: "seca {p} %/h", inf_slow: "apenas seca ({p} %/h)", inf_none: "no seca", inf_wet: "la ropa coge humedad (aire {rh} %)",
     inf_rain: "lluvia {mm} mm ({prob} %)", inf_rain_p: "riesgo de lluvia {prob} %",
   },
@@ -145,6 +149,8 @@ function stripKind(h, hanging) {
   if (h.rain === "possible") return "rain_possible";
   // older integrations without a rain level
   if (h.rain === undefined && h.blocked === "rain") return "rain_likely";
+  // slow hour inside a bridged gap: part of the window, it keeps drying
+  if (h.gap) return "slow";
   const humid = h.humid || 0;
   if (hanging && humid >= 3) return "wet";
   let kind = "ideal";
@@ -512,9 +518,16 @@ class DryingPilotCard extends HTMLElement {
       parts.push(tr(this._hass, "inf_wet", { rh }));
     } else if (!(h.rain && h.blocked === "rain")) {
       const p = h.pct !== undefined ? h.pct : h.rate;
-      if (h.rate >= CAT_LIMITS[0]) parts.push(tr(this._hass, "inf_dries", { p: num(p) }));
+      if (h.rate >= CAT_LIMITS[0] || h.gap) parts.push(tr(this._hass, "inf_dries", { p: num(p) }));
       else if (p >= 0.5) parts.push(tr(this._hass, "inf_slow", { p: num(p) }));
       else parts.push(tr(this._hass, "inf_none"));
+    }
+    if (h.past) {
+      parts.push(
+        h.measured
+          ? tr(this._hass, "inf_measured", { t: num(h.temperature), rh })
+          : tr(this._hass, "inf_was_fc")
+      );
     }
     return parts.join(" · ");
   }
@@ -538,8 +551,11 @@ class DryingPilotCard extends HTMLElement {
   }
 
   _forecastStrip(rateState, hanging) {
-    const fc = (rateState.attributes.forecast || []).slice(0, 48);
-    if (!fc.length) return "";
+    const future = (rateState.attributes.forecast || []).slice(0, 48);
+    if (!future.length) return "";
+    // running session: the hours so far (measured) left of now
+    const past = hanging ? (rateState.attributes.past || []).slice(-24) : [];
+    const fc = past.concat(future);
     const windows = (rateState.attributes.windows || []).filter((w) => w.sufficient || w.predry);
     const t0 = new Date(fc[0].time).getTime();
     const span = fc.length * 3600e3;
@@ -549,10 +565,13 @@ class DryingPilotCard extends HTMLElement {
     this._fc = fc;
     const seen = new Set();
     const cells = fc
-      .map((h) => {
+      .map((h, i) => {
         const kind = stripKind(h, hanging);
         seen.add(kind);
-        return `<div class="${hatch(kind)}" style="background-color:${STRIP_STYLES[kind]}"></div>`;
+        const cls = [hatch(kind), h.past ? "past" : "", past.length && i === past.length ? "now" : ""]
+          .filter(Boolean)
+          .join(" ");
+        return `<div class="${cls}" style="background-color:${STRIP_STYLES[kind]}"></div>`;
       })
       .join("");
 
@@ -586,6 +605,12 @@ class DryingPilotCard extends HTMLElement {
         items.push(`<span class="lg"><i class="lg-win"></i>${tr(this._hass, "lg_window")}</span>`);
       if (windows.some((w) => !w.sufficient && w.predry))
         items.push(`<span class="lg"><i class="lg-win pre"></i>${tr(this._hass, "lg_predry")}</span>`);
+      if (past.length) {
+        const measured = past.some((h) => h.measured);
+        items.push(
+          `<span class="lg"><i class="lg-past"></i>${tr(this._hass, measured ? "lg_past" : "lg_past_fc")}</span>`
+        );
+      }
       legend = `<div class="legend">${items.join("")}</div>`;
     }
 
@@ -668,6 +693,10 @@ const STYLE = `<style>
   .strip.show-info .ticks { visibility: hidden; }
   .strip.show-info .info { display: block; }
   .cells > div.cur { box-shadow: inset 0 0 0 2px var(--primary-text-color); }
+  .cells > div.past { opacity: .6; }
+  .cells > div.now { box-shadow: inset 2px 0 0 var(--primary-text-color); }
+  .cells > div.now.cur { box-shadow: inset 0 0 0 2px var(--primary-text-color); }
+  .lg i.lg-past { background: var(--secondary-text-color); opacity: .35; }
   .tick { position: absolute; font-size: 10px; color: var(--secondary-text-color); transform: translateX(-1px); }
   .tick.day { color: var(--primary-text-color); font-weight: 500; }
   .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 4px;

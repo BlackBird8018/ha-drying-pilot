@@ -609,8 +609,10 @@ def forecast_series(
     """Hourly series for the card strip and charts (already locally corrected).
 
     With `target`, `pct` is the share of the drying need covered per hour (%/h).
+    Slow hours inside a bridged gap (see `_bridged`) carry `gap: True` and no
+    block reason, exactly like the windows.
     """
-    out = []
+    rows = []
     humid = humid_now
     for slot in slots:
         if slot.end <= now:
@@ -621,17 +623,87 @@ def forecast_series(
             if humid is None
             else next_humid_state(humid, weather, params)
         )
-        reason = block_reason(weather, location, params, humid)
+        rows.append((slot.start, slot.end, weather, block_reason(weather, location, params, humid), humid))
+    bridged = _bridged([(s, e, w, r) for s, e, w, r, _h in rows], params)
+    out = []
+    for (start, _end, weather, reason, humid), (_s, _e, _w, eff) in zip(rows, bridged):
         rate = drying_rate(weather, location, params)
         item = {
-            "time": slot.start.isoformat(),
+            "time": start.isoformat(),
             "rate": round(rate, 1),
-            "blocked": reason.value if reason else None,
+            "blocked": eff.value if eff else None,
             "rain": rain_level(weather, params),
             "humid": humid_level(weather, humid, params),
             "humidity": round(weather.humidity),
             "rain_mm": round(weather.rain_mm, 1),
             "rain_probability": round(weather.rain_probability),
+        }
+        if reason is not None and eff is None:
+            item["gap"] = True
+        if target:
+            item["pct"] = round(rate / target * 100.0, 1)
+        out.append(item)
+    return out
+
+
+def past_series(
+    samples: list[tuple[datetime, Weather, bool]],
+    start: datetime,
+    now: datetime,
+    location: Location,
+    params: ModelParams,
+    target: float | None = None,
+    max_hours: int = 24,
+) -> list[dict]:
+    """Hourly review of a running drying session, from recorded samples.
+
+    `samples` are (time, weather, measured) - measured is True for sensor
+    values and False where only the forecast was available back then. One item
+    per full hour from the hour of `start` up to (not including) the current
+    hour, at most `max_hours`; hours without samples are left out. The rate is
+    the mean of the sample rates, i.e. what the progress was actually built on.
+    """
+    hour = timedelta(hours=1)
+    current = now.replace(minute=0, second=0, microsecond=0)
+    first = max(
+        start.replace(minute=0, second=0, microsecond=0),
+        current - max_hours * hour,
+    )
+    buckets: dict[datetime, list[tuple[Weather, bool]]] = {}
+    for time, weather, measured in samples:
+        h = time.replace(minute=0, second=0, microsecond=0)
+        if first <= h < current:
+            buckets.setdefault(h, []).append((weather, measured))
+    out = []
+    humid: bool | None = None
+    for h in sorted(buckets):
+        items = buckets[h]
+        n = len(items)
+        mean = Weather(
+            temperature=sum(w.temperature for w, _m in items) / n,
+            humidity=sum(w.humidity for w, _m in items) / n,
+            wind_kmh=sum(w.wind_kmh for w, _m in items) / n,
+            sun=sum(w.sun for w, _m in items) / n,
+            rain_mm=max(w.rain_mm for w, _m in items),
+            rain_probability=max(w.rain_probability for w, _m in items),
+        )
+        humid = (
+            humid_enter(mean, params)
+            if humid is None
+            else next_humid_state(humid, mean, params)
+        )
+        rate = sum(drying_rate(w, location, params) for w, _m in items) / n
+        item = {
+            "time": h.isoformat(),
+            "past": True,
+            "measured": sum(1 for _w, m in items if m) * 2 >= n,
+            "rate": round(rate, 1),
+            "rain": rain_level(mean, params),
+            "humid": humid_level(mean, humid, params),
+            "humidity": round(mean.humidity),
+            "temperature": round(mean.temperature, 1),
+            "rain_mm": round(mean.rain_mm, 1),
+            "rain_probability": round(mean.rain_probability),
         }
         if target:
             item["pct"] = round(rate / target * 100.0, 1)

@@ -136,7 +136,7 @@ async def async_setup_entry(
 
 class DryerSensor(DryingPilotEntity, SensorEntity):
     entity_description: DryerSensorDescription
-    _unrecorded_attributes = frozenset({"forecast", "windows"})
+    _unrecorded_attributes = frozenset({"forecast", "windows", "past"})
 
     def __init__(
         self, coordinator: DryingPilotCoordinator, desc: DryerSensorDescription
@@ -208,7 +208,12 @@ class DryerSensor(DryingPilotEntity, SensorEntity):
             attrs["stored_runs"] = len(self.coordinator.history)
             return attrs
         if key == "rate":
-            return {"forecast": self._forecast_series(d), "windows": self._windows(d)}
+            return {
+                "forecast": self._forecast_series(d),
+                "windows": self._windows(d),
+                # running session: what it really was (sensor) hour by hour
+                "past": self.coordinator.review(dt_util.utcnow()),
+            }
         if key == "progress":
             ev = d.evaluation
             return {

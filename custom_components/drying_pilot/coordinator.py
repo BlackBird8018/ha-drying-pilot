@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field, replace
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
@@ -76,6 +76,7 @@ from .model import (
     humid_exit,
     humidity_from_dew_point,
     is_raining,
+    past_series,
     slots_from_forecast,
     spin_factor,
     sun_from_pv,
@@ -90,6 +91,9 @@ from .notify import (
 from .texts import TileText, tile_text
 
 _LOGGER = logging.getLogger(__name__)
+
+LIVE_MEAN_WINDOW = timedelta(hours=1)
+LIVE_MEAN_MIN_GAP = timedelta(minutes=1)
 
 type DryingPilotConfigEntry = ConfigEntry[DryingPilotCoordinator]
 
@@ -234,6 +238,8 @@ class DryingPilotCoordinator(DataUpdateCoordinator[DryerData]):
         self._forecast_fetched: datetime | None = None
         self._wind_factor = 1.0
         self.live_source: str | None = None
+        # recent live readings, averaged for the forecast correction
+        self._live_buf: list[tuple[datetime, Weather]] = []
 
     # ------------------------------------------------------------ Configuration
 
@@ -536,6 +542,50 @@ class DryingPilotCoordinator(DataUpdateCoordinator[DryerData]):
             cloud=current.weather.cloud if current else None,
         )
 
+    def _live_mean(self, live: Weather | None, now: datetime) -> Weather | None:
+        """Mean of the live readings of the last LIVE_MEAN_WINDOW."""
+        if live is None:
+            self._live_buf.clear()
+            return None
+        buf = [(t, w) for t, w in self._live_buf if now - t < LIVE_MEAN_WINDOW]
+        if not buf or now - buf[-1][0] >= LIVE_MEAN_MIN_GAP:
+            buf.append((now, live))
+        self._live_buf = buf
+        n = len(buf)
+        return replace(
+            live,
+            temperature=sum(w.temperature for _t, w in buf) / n,
+            humidity=sum(w.humidity for _t, w in buf) / n,
+        )
+
+    def review(self, now: datetime) -> list[dict[str, Any]]:
+        """Hourly review of the running session (card strip, left of now)."""
+        st = self.state
+        run = st.run
+        if not st.hanging or run is None or not run.samples:
+            return []
+        params = self.params_for(st.location)
+        samples = [
+            (
+                smp.time,
+                replace(
+                    smp.weather,
+                    rain_mm=smp.rain_mm,
+                    rain_probability=smp.rain_probability,
+                ),
+                smp.source == "sensor",
+            )
+            for smp in run.samples
+        ]
+        return past_series(
+            samples,
+            st.started_at or run.start,
+            now,
+            st.location,
+            params,
+            target=params.target(st.laundry),
+        )
+
     def _update_humid(self, current: Weather | None, now: datetime) -> bool:
         """Debounced humid state: hysteresis plus minimum duration."""
         st = self.state
@@ -648,9 +698,12 @@ class DryingPilotCoordinator(DataUpdateCoordinator[DryerData]):
             for item in self._forecast_raw
         ]
         slots = slots_from_forecast(raw, params)
-        live = self._live_weather(slots, now)
+        live_now = self._live_weather(slots, now)
+        # instant reading for progress and the humid debounce, the mean of the
+        # last hour for the forecast (a gust or a sunny moment must not bend it)
+        live = self._live_mean(live_now, now)
         current_slot = next((s for s in slots if s.start <= now < s.end), None)
-        current = live or (current_slot.weather if current_slot else None)
+        current = live_now or (current_slot.weather if current_slot else None)
         humid = self._update_humid(current, now)
 
         if st.hanging:
@@ -709,6 +762,8 @@ class DryingPilotCoordinator(DataUpdateCoordinator[DryerData]):
                 current.wind_kmh,
                 current.sun,
                 "sensor" if self.live_source else "forecast",
+                current_slot.weather.rain_mm if current_slot else 0.0,
+                current_slot.weather.rain_probability if current_slot else 0.0,
             )
         )
         raining = (

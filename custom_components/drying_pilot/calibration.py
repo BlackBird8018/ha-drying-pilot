@@ -47,6 +47,10 @@ class Sample:
     wind_kmh: float
     sun: float
     source: str  # "sensor" or "forecast"
+    # forecast rain at that time (the sensor does not measure rain); only used
+    # for the review in the card, not for calibration
+    rain_mm: float = 0.0
+    rain_probability: float = 0.0
 
     def to_list(self) -> list:
         return [
@@ -56,11 +60,14 @@ class Sample:
             round(self.wind_kmh, 1),
             round(self.sun, 3),
             self.source,
+            round(self.rain_mm, 1),
+            round(self.rain_probability),
         ]
 
     @classmethod
     def from_list(cls, data: list) -> Sample:
-        return cls(datetime.fromisoformat(data[0]), *data[1:6])
+        # older stores have 6 fields (no rain)
+        return cls(datetime.fromisoformat(data[0]), *data[1:8])
 
     @property
     def weather(self) -> Weather:

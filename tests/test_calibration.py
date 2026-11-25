@@ -114,3 +114,12 @@ def test_samples_are_thinned_to_15_minutes():
     for i in range(12):  # every 5 minutes for 1 h
         run.add_sample(Sample(T0 + timedelta(minutes=5 * i), 20, 50, 5, 0, "sensor"))
     assert len(run.samples) == 4
+
+
+def test_sample_roundtrip_with_and_without_rain():
+    from cdt.calibration import Sample
+
+    s = Sample(T0, 12.0, 80.0, 5.0, 0.2, "sensor", 0.4, 55)
+    assert Sample.from_list(s.to_list()) == Sample(T0, 12.0, 80.0, 5.0, 0.2, "sensor", 0.4, 55)
+    old = [T0.isoformat(), 12.0, 80.0, 5.0, 0.2, "sensor"]
+    assert Sample.from_list(old).rain_mm == 0.0

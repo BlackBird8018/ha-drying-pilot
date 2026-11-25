@@ -151,10 +151,19 @@ normal 100 %, heavy 150 %. The sun bonus only applies on the clothesline.
 **Drying windows** are made of hours with at least the minimum rate (5 %/h) and
 no rain or rewetting. Short dips below the minimum rate (up to 4 h) do not split a
 window: the laundry keeps drying a little and does not get wet again, so these
-hours count with their low rate. Rain or humid air always ends a window.
+hours count with their low rate. Rain or humid air always ends a window. The
+forecast strip shows such hours as *slow* (light green), like the rest of the window.
 
-The current hour uses live sensor values; the offset between sensor and
-forecast is carried over to the following hours and fades out (τ = 3 h).
+**Sensor vs. forecast:** with a temperature/humidity sensor, the sensor is the truth
+and the forecast only fills the future. The progress of hanging laundry is built from
+the sensor readings alone. For the forecast, the mean of the last hour of sensor
+readings replaces the current hour, and the offset to the forecast is carried over to
+the following hours and fades out (τ = 3 h) – a short gust or sunny moment does not
+bend the whole forecast. While laundry is hanging, the card strip also shows the hours
+so far (up to 24 h, left of *now*, slightly faded) as they really were: hourly means of
+the sensor readings and the drying rate the progress was built on. Without a sensor
+these hours show the forecast of the time and are labelled as such. Rain is always
+taken from the forecast.
 
 **Rewetting:** laundry takes up moisture again from 90 % relative humidity, or on
 clear nights when the air is less than 3 K above its dew point (dew forms on the
@@ -167,7 +176,7 @@ DryingPilot warns. All thresholds can be changed in the options.
 |---|---|
 | Mode | `indoor`, `later`, `pre_dry`, `hang_now`, `drying`, `tight`, `paused`, `bring_in`, `dry`; attributes `title`, `subtitle`, `tile_icon`, `color` |
 | Status | Category (Not drying … Ideal) |
-| Drying rate | %/h; attributes `forecast` (hourly: `rate`, `pct`, `blocked`, `rain`, `rain_mm`, `rain_probability`, `humid` 0–3, `humidity`) and `windows` for charts |
+| Drying rate | %/h; attributes `forecast` (hourly: `rate`, `pct`, `blocked`, `rain`, `rain_mm`, `rain_probability`, `humid` 0–3, `humidity`) `windows` and, while laundry hangs, `past` (hourly review of the session: `rate`, `temperature`, `humidity`, `measured`, …) for charts |
 | Vapour pressure deficit | hPa |
 | Progress | % of target (only while laundry is out) |
 | Possible until / Expected dry / Next window start / end | Timestamps |
