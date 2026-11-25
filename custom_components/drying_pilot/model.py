@@ -102,6 +102,9 @@ class ModelParams:
 
     # minimum rate for an hour to belong to a window
     min_rate: float = 5.0
+    # slow-only gaps up to this length do not split a window: the laundry
+    # keeps drying a little and does not get wet again (rain/humid always split)
+    max_gap_hours: float = 4.0
 
     # rain criterion (clothesline only)
     rain_mm: float = 0.1
@@ -531,6 +534,36 @@ def _classified(
     return out
 
 
+def _bridged(
+    segs: list[tuple[datetime, datetime, Weather, BlockReason | None]],
+    params: ModelParams,
+) -> list[tuple[datetime, datetime, Weather, BlockReason | None]]:
+    """Clear SLOW on short gaps between two drying stretches.
+
+    A run of SLOW-only segments of at most `max_gap_hours` that lies between
+    drying segments counts as drying (with its low rate). Slow hours at the
+    start or end stay blocked, so a running pause keeps showing as paused.
+    """
+    out = list(segs)
+    i = 0
+    while i < len(out):
+        if out[i][3] is not BlockReason.SLOW:
+            i += 1
+            continue
+        j = i
+        while j < len(out) and out[j][3] is BlockReason.SLOW:
+            j += 1
+        hours = (out[j - 1][1] - out[i][0]).total_seconds() / 3600.0
+        before = i > 0 and out[i - 1][3] is None
+        after = j < len(out) and out[j][3] is None
+        if before and after and hours <= params.max_gap_hours:
+            for k in range(i, j):
+                start, end, weather, _reason = out[k]
+                out[k] = (start, end, weather, None)
+        i = j
+    return out
+
+
 RAIN_LIKELY_PROBABILITY = 60.0
 RAIN_LIKELY_MM = 1.0
 HUMID_LIGHT_OFFSET = 10.0
@@ -633,8 +666,8 @@ def find_windows(
                 Window(cur_start, cur_end, total, total >= target, dry_at)
             )
 
-    for start, end, weather, reason in _classified(
-        slots, now, live, location, params, humid_now
+    for start, end, weather, reason in _bridged(
+        _classified(slots, now, live, location, params, humid_now), params
     ):
         if reason is None:
             if cur_start is None or cur_end != start:
@@ -664,8 +697,8 @@ def possible_until(
 ) -> datetime | None:
     """End of the window running now, else None."""
     last_end: datetime | None = None
-    for start, end, _weather, reason in _classified(
-        slots, now, live, location, params, humid_now
+    for start, end, _weather, reason in _bridged(
+        _classified(slots, now, live, location, params, humid_now), params
     ):
         if last_end is None and start > now:
             return None  # no data for now: no window is running
@@ -705,8 +738,9 @@ def estimate(
     total = progress
     if total >= target:
         return Estimate(now, None, total, None)
-    for start, end, weather, reason in _classified(
-        slots, now, live, location, params, humid_now
+    for start, end, weather, reason in _bridged(
+        _classified(slots, now, live, location, params, humid_now),
+        params,
     ):
         if reason is not None:
             return Estimate(None, start, total, reason)

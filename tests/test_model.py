@@ -159,6 +159,51 @@ def test_possible_until():
     assert possible_until(slots, T0 + timedelta(hours=4), Location.LINE, P) is None
 
 
+SLOW = Weather(6, 82, wind_kmh=2)  # just below min_rate, neither rain nor humid
+
+
+def test_short_slow_gap_does_not_split_window():
+    slots = make_slots(T0, [GOOD] * 2 + [SLOW] * 4 + [GOOD] * 2)
+    wins = find_windows(slots, T0, Location.LINE, 1000, P)
+    assert len(wins) == 1
+    assert wins[0].end == T0 + timedelta(hours=8)
+    # the gap hours still count with their low rate
+    good = drying_rate(GOOD, Location.LINE, P)
+    slow = drying_rate(SLOW, Location.LINE, P)
+    assert wins[0].total == pytest.approx(4 * good + 4 * slow)
+    assert possible_until(slots, T0, Location.LINE, P) == T0 + timedelta(hours=8)
+
+
+def test_long_slow_gap_splits_window():
+    slots = make_slots(T0, [GOOD] * 2 + [SLOW] * 5 + [GOOD] * 2)
+    wins = find_windows(slots, T0, Location.LINE, 1000, P)
+    assert [(w.start, w.end) for w in wins] == [
+        (T0, T0 + timedelta(hours=2)),
+        (T0 + timedelta(hours=7), T0 + timedelta(hours=9)),
+    ]
+
+
+def test_rain_or_humid_gap_always_splits_window():
+    for gap in (RAIN, HUMID):
+        slots = make_slots(T0, [GOOD] * 2 + [gap] + [GOOD] * 2)
+        assert len(find_windows(slots, T0, Location.LINE, 1000, P)) == 2
+
+
+def test_slow_hours_at_window_edges_are_not_added():
+    slots = make_slots(T0, [SLOW] * 2 + [GOOD] * 2 + [SLOW] * 2)
+    wins = find_windows(slots, T0, Location.LINE, 1000, P)
+    assert len(wins) == 1
+    assert wins[0].start == T0 + timedelta(hours=2)
+    assert wins[0].end == T0 + timedelta(hours=4)
+
+
+def test_estimate_bridges_short_slow_gap():
+    slots = make_slots(T0, [GOOD] + [SLOW] * 3 + [GOOD] * 5)
+    est = estimate(slots, T0, 0, Location.LINE, 100, P)
+    assert est.dry_at is not None
+    assert est.dry_at > T0 + timedelta(hours=4)
+
+
 def test_live_value_overrides_current_hour():
     slots = make_slots(T0, [GOOD] * 3)
     live_bad = Weather(10, 98, wind_kmh=0)

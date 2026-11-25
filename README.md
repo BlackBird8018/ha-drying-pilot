@@ -148,6 +148,11 @@ normal 100 %, heavy 150 %. The sun bonus only applies on the clothesline.
 | Good | 17–30 %/h |
 | Ideal | > 30 %/h |
 
+**Drying windows** are made of hours with at least the minimum rate (5 %/h) and
+no rain or rewetting. Short dips below the minimum rate (up to 4 h) do not split a
+window: the laundry keeps drying a little and does not get wet again, so these
+hours count with their low rate. Rain or humid air always ends a window.
+
 The current hour uses live sensor values; the offset between sensor and
 forecast is carried over to the following hours and fades out (τ = 3 h).
 
